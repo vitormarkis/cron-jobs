@@ -6,6 +6,7 @@ import { userRegisterSchema, userSigninSchema } from "./schemas/users"
 import { filterSensetiveInfoForClient } from "./helpers"
 import { Prisma } from "@prisma/client"
 import jwt from "jsonwebtoken"
+import { postSchemaBody } from "./schemas/posts"
 dotenv.config()
 
 app.use(express.json())
@@ -32,19 +33,61 @@ async function ensureAuth(req: Request, res: Response, next: NextFunction) {
     json: true,
   })
   if (decodedToken && decodedToken.sub) {
-    req.username = decodedToken.sub
+    req.user_id = decodedToken.sub
   }
 
   next()
 }
 
-app.get("/whoami", ensureAuth, async (req: Request, res: Response) => {
-  const { username } = req
+app.post("/posts", ensureAuth, async (req: Request, res: Response) => {
+  try {
+    const { text } = postSchemaBody.parse(req.body)
+    const { user_id } = req
 
-  return res.json({ username })
+    const databaseRawResponse = await prisma.post.create({
+      data: {
+        text,
+        user_id,
+      },
+    })
+
+    return res.status(201).json(databaseRawResponse)
+  } catch (error) {
+    return res.json(error)
+    // if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    //   switch (error.code) {
+    //     case "P2002": {
+    //       if (error.meta) {
+    //         const target = error.meta.target as string[]
+    //         const fields = target.join(", ")
+    //         const singularField = `Já existe uma conta com o campo: ${fields}.`
+    //         const multipleFields = `Já existem contas com os campos: ${fields}.`
+    //         return res.status(400).json({
+    //           message: target.length === 1 ? singularField : multipleFields,
+    //         })
+    //       }
+    //       return
+    //     }
+    //   }
+    // }
+  }
 })
 
-app.get("/users", ensureAuth, async (req: Request, res: Response) => {
+app.get("/posts", async (req: Request, res: Response) => {
+  const postsFromDatabase = await prisma.post.findMany()
+
+  const posts = filterSensetiveInfoForClient(postsFromDatabase)
+
+  return res.json(posts)
+})
+
+app.get("/whoami", ensureAuth, async (req: Request, res: Response) => {
+  const { user_id } = req
+
+  return res.json({ user_id })
+})
+
+app.get("/users", async (req: Request, res: Response) => {
   const usersFromDatabase = await prisma.user.findMany()
 
   const users = filterSensetiveInfoForClient(usersFromDatabase)
@@ -107,7 +150,7 @@ app.post("/signin", async (req: Request, res: Response) => {
     const user = filterSensetiveInfoForClient(userFromDatabase)
 
     const accessToken = jwt.sign({}, process.env.SERVER_SECRET as string, {
-      subject: username,
+      subject: userFromDatabase.id,
       expiresIn: "20m",
     })
 
