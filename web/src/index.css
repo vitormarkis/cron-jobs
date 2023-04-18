@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.outfit {
+  font-family: "Outfit";
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  @apply bg-zinc-800 rounded-lg
+}

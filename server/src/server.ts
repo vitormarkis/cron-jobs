@@ -1,15 +1,29 @@
 import express, { NextFunction, Request, Response } from "express"
-const app = express()
-import dotenv from "dotenv"
 import { prisma } from "./services/prisma"
 import { userRegisterSchema, userSigninSchema } from "./schemas/users"
 import { filterSensetiveInfoForClient } from "./helpers"
 import { Prisma } from "@prisma/client"
-import jwt from "jsonwebtoken"
 import { postSchemaBody } from "./schemas/posts"
-import cron from "node-cron"
 import { getCronTime } from "./helpers/getCronTime"
+import cron from "node-cron"
+import jwt from "jsonwebtoken"
+import dotenv from "dotenv"
+import { Server } from "socket.io"
+import http from "http"
 dotenv.config()
+
+const app = express()
+const serverHTTP = http.createServer(app)
+const io = new Server(serverHTTP, {
+  cors: {
+    origin: "*",
+  },
+})
+
+
+io.on("connection", (socket) => {
+  console.log(socket.id)
+})
 
 const scheduledJobs = new Map()
 app.use(express.json())
