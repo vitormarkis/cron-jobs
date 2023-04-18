@@ -30,6 +30,7 @@ export function NotificationsPopover() {
               </div>
             ))}
           </div>
+          <Popover.Arrow fill={twc.zinc[800]} />
         </Popover.Content>,
         document.querySelector("#portal")!
       )}

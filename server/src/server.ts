@@ -10,9 +10,12 @@ import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 import { Server } from "socket.io"
 import http from "http"
+import cors from "cors"
 dotenv.config()
 
 const app = express()
+app.use(express.json())
+app.use(cors())
 const serverHTTP = http.createServer(app)
 const io = new Server(serverHTTP, {
   cors: {
@@ -20,17 +23,13 @@ const io = new Server(serverHTTP, {
   },
 })
 
-
-io.on("connection", (socket) => {
-  console.log(socket.id)
-})
-
 const scheduledJobs = new Map()
-app.use(express.json())
 
-// cron.schedule("* 50 16 17 04 1", () => {
-//   console.log("Rodando")
-// })
+io.on("connection", socket => {
+  socket.on("join_room", room => {
+    socket.join(room)
+  })
+})
 
 async function ensureAuth(req: Request, res: Response, next: NextFunction) {
   const authorizationHeader = req.headers["authorization"]
@@ -125,9 +124,7 @@ app.post("/posts", ensureAuth, async (req: Request, res: Response) => {
 app.get("/posts", async (req: Request, res: Response) => {
   const postsFromDatabase = await prisma.post.findMany()
 
-  const posts = filterSensetiveInfoForClient(postsFromDatabase)
-
-  return res.json(posts)
+  return res.json(postsFromDatabase)
 })
 
 app.get("/whoami", ensureAuth, async (req: Request, res: Response) => {
@@ -212,6 +209,6 @@ app.post("/signin", async (req: Request, res: Response) => {
   }
 })
 
-app.listen(process.env.PORT, () =>
+serverHTTP.listen(process.env.PORT, () =>
   console.log("[server] Server is running on port " + process.env.PORT)
 )
