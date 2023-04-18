@@ -10,6 +10,7 @@ import { formatDistanceStrict } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import dayjs from "dayjs"
 import { random } from "./utils"
+import { SignInModal } from "./components/SiginInModal"
 
 export const socket = io(URL as string)
 
@@ -70,6 +71,7 @@ function App() {
           </div>
           <div className="flex items-center">
             <NotificationsPopover />
+            <SignInModal />
           </div>
         </div>
       </header>
@@ -122,9 +124,10 @@ function App() {
                   className="flex items-center last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
                 >
                   <div className="flex flex-col grow gap-1">
-                    <p className="bg-zinc-800 animate-pulse h-3.5 mb-1.5 rounded-lg"
+                    <p
+                      className="bg-zinc-800 animate-pulse h-3.5 mb-1.5 rounded-lg"
                       style={{ width: random(175, 190) }}
-                     />
+                    />
                     <p
                       className="bg-zinc-600 animate-pulse w-full h-[1.125rem] rounded-lg"
                       style={{ width: random(70, 350) }}
