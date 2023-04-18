@@ -121,7 +121,7 @@ app.post("/posts", ensureAuth, async (req: Request, res: Response) => {
   }
 })
 
-app.get("/posts", async (req: Request, res: Response) => {
+app.get("/posts", ensureAuth, async (req: Request, res: Response) => {
   const postsFromDatabase = await prisma.post.findMany()
 
   return res.json(postsFromDatabase)
@@ -197,7 +197,9 @@ app.post("/signin", async (req: Request, res: Response) => {
     }
 
     const passwordMatch = userFromDatabase.password === password
-    if (!passwordMatch) throw new Error("Senha incorreta.")
+    if (!passwordMatch) {
+      return res.status(404).json({ message: "Usuário ou senha incorretos." })
+    }
 
     const user = filterSensetiveInfoForClient(userFromDatabase)
 

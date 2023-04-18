@@ -13,25 +13,20 @@ import axios, { AxiosError } from "axios"
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useToastStore } from "../zustand/toastStore"
+import { useAuthStore } from "../zustand/auth"
 
 export function SignInModal() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
-  const { register, reset, handleSubmit } = useForm<IUserSigninBody>()
-  const { hideToast, isToastVisible, showToast } = useToastStore(state => state)
+  const { register, handleSubmit } = useForm<IUserSigninBody>()
+  const { login } = useAuthStore(state => state)
 
   const submitHandler: SubmitHandler<IUserSigninBody> = async formData => {
     try {
       const { password, username } = userSigninSchema.parse(formData)
 
       setErrorMessage("")
-      const response = await axios.post("http://localhost:3939/signin", {
-        username,
-        password,
-      })
-      const { accessToken, user } = z
-        .object({ accessToken: z.string(), user: userSessionSchema })
-        .parse(await response.data)
-      console.log({ accessToken, user })
+      await login({ password, username }).then(() => setIsModalOpen(false))
     } catch (error) {
       if (error instanceof z.ZodError) {
         const [actualError] = error.issues
@@ -40,12 +35,14 @@ export function SignInModal() {
       }
       if (error instanceof AxiosError) {
         setErrorMessage(error.response?.data.message)
+        return
       }
+      console.log({ error })
     }
   }
 
   return (
-    <Dialog.Root>
+    <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
       <Dialog.Trigger asChild>
         <button className="hover:bg-zinc-800 p-1.5 rounded-lg">
           <svg

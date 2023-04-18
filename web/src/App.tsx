@@ -3,7 +3,7 @@ import { NotificationsPopover } from "./components/NotificationsPopover"
 import { io } from "socket.io-client"
 import { useQuery } from "@tanstack/react-query"
 const URL = "http://localhost:3939"
-import axios from "axios"
+import axios, { AxiosHeaders } from "axios"
 import { z } from "zod"
 import { postSchema } from "./schemas/posts"
 import { formatDistanceStrict } from "date-fns"
@@ -12,47 +12,27 @@ import dayjs from "dayjs"
 import { random } from "./utils"
 import { AnimatePresence } from "framer-motion"
 import { SignInModal } from "./components/SiginInModal"
+import { useAuthStore } from "./zustand/auth"
 
 export const socket = io(URL as string)
 
 socket.on("connect", () => console.log("Client connected."))
 
 function App() {
+  const { token, isAuth, logout } = useAuthStore(state => state)
+  const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
+  console.log(token)
+
   const { data: posts } = useQuery({
-    queryKey: ["posts"],
+    queryKey: ["posts", token],
     queryFn: () =>
-      axios.get(URL + "/posts").then(r => z.array(postSchema).parse(r.data)),
+      axios
+        .get(URL + "/posts", { headers })
+        .then(r => z.array(postSchema).parse(r.data)),
     staleTime: 1000 * 60 * 1,
   })
 
-  console.log(posts)
-
-  // const posts = null
-  // const isLoading = true
-
-  // const posts = [
-  //   {
-  //     id: "clglah7jg0001vem0szvhefxr",
-  //     text: "New Post",
-  //     user_id: "clgl6ftv60000veguusl1n8ol",
-  //     announcement_date: "2023-04-18T00:00:00.000Z",
-  //     created_at: "2023-04-17T20:29:12.172Z",
-  //     updated_at: "2023-04-17T20:29:12.172Z",
-  //   },
-  //   {
-  //     id: "clglaijn50003vem032izsic4",
-  //     text: "Another one post to fill up",
-  //     user_id: "clgl6ftv60000veguusl1n8ol",
-  //     announcement_date: "2023-04-19T00:00:00.000Z",
-  //     created_at: "2023-04-17T20:30:14.513Z",
-  //     updated_at: "2023-04-17T20:30:14.513Z",
-  //   },
-  // ]
-  // const isLoading = false
-
-  // console.log(posts)
-
-  // posts && !isLoading
+  const { user } = useAuthStore(state => state)
 
   return (
     <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-colors [&_*]:duration-200">
@@ -73,8 +53,27 @@ function App() {
             </p>
           </div>
           <div className="flex items-center">
+            {user && <p className="p-1.5">{user.username}</p>}
             <NotificationsPopover />
+
+            {isAuth ? (
+              <button
+                onClick={() => logout()}
+                className="hover:bg-zinc-800 p-1.5 rounded-lg"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="26"
+                  height="26"
+                  fill={twc.white}
+                  viewBox="0 0 256 256"
+                >
+                  <path d="M116,216a12,12,0,0,1-12,12H48a20,20,0,0,1-20-20V48A20,20,0,0,1,48,28h56a12,12,0,0,1,0,24H52V204h52A12,12,0,0,1,116,216Zm108.49-96.49-40-40a12,12,0,0,0-17,17L187,116H104a12,12,0,0,0,0,24h83l-19.52,19.51a12,12,0,0,0,17,17l40-40A12,12,0,0,0,224.49,119.51Z"></path>
+                </svg>
+              </button>
+            ) : (
               <SignInModal />
+            )}
           </div>
         </div>
       </header>
