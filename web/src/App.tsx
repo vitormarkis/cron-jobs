@@ -23,16 +23,23 @@ function App() {
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
   console.log(token)
 
-  const { data: posts } = useQuery({
+  const {
+    data: posts,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["posts", token],
     queryFn: () =>
       axios
         .get(URL + "/posts", { headers })
         .then(r => z.array(postSchema).parse(r.data)),
     staleTime: 1000 * 60 * 1,
+    retry: false,
   })
 
   const { user } = useAuthStore(state => state)
+
+  console.log(isLoading)
 
   return (
     <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-colors [&_*]:duration-200">
@@ -79,7 +86,28 @@ function App() {
       </header>
       <main className="flex grow">
         <section className="mx-auto scroll-thin max-w-lg w-full h-[calc(100vh_-_54px)] bg-zinc-900 flex flex-col overflow-y-scroll">
-          {posts ? (
+          {isLoading && !posts ? (
+            <>
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
+                >
+                  <div className="flex flex-col grow gap-1">
+                    <p
+                      className="bg-zinc-800 animate-pulse h-3.5 mb-1.5 rounded-lg"
+                      style={{ width: random(175, 190) }}
+                    />
+                    <p
+                      className="bg-zinc-600 animate-pulse w-full h-[1.125rem] rounded-lg"
+                      style={{ width: random(70, 350) }}
+                    />
+                  </div>
+                  <button className="ml-4 rounded-full px-5 py-2 border-b border-zinc-900 animate-pulse text-sm bg-zinc-600 h-[32px] w-[97px]" />
+                </div>
+              ))}
+            </>
+          ) : posts ? (
             posts.map(post => {
               const isAnnouncementDateInPast = dayjs(
                 post.announcement_date
@@ -119,26 +147,9 @@ function App() {
               )
             })
           ) : (
-            <>
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex items-center last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
-                >
-                  <div className="flex flex-col grow gap-1">
-                    <p
-                      className="bg-zinc-800 animate-pulse h-3.5 mb-1.5 rounded-lg"
-                      style={{ width: random(175, 190) }}
-                    />
-                    <p
-                      className="bg-zinc-600 animate-pulse w-full h-[1.125rem] rounded-lg"
-                      style={{ width: random(70, 350) }}
-                    />
-                  </div>
-                  <button className="ml-4 rounded-full px-5 py-2 border-b border-zinc-900 animate-pulse text-sm bg-zinc-600 h-[32px] w-[97px]" />
-                </div>
-              ))}
-            </>
+            <div className="mt-12 text-zinc-500">
+              <h3 className="text-center">Não há nada para ver aqui :/</h3>
+            </div>
           )}
         </section>
       </main>
