@@ -184,11 +184,17 @@ app.post("/signin", async (req: Request, res: Response) => {
   try {
     const { password, username } = userSigninSchema.parse(req.body)
 
-    const userFromDatabase = await prisma.user.findFirstOrThrow({
+    const userFromDatabase = await prisma.user.findFirst({
       where: {
         username,
       },
     })
+
+    if (!userFromDatabase) {
+      return res
+        .status(404)
+        .json({ message: "Verifique os dados inseridos e tente novamente." })
+    }
 
     const passwordMatch = userFromDatabase.password === password
     if (!passwordMatch) throw new Error("Senha incorreta.")

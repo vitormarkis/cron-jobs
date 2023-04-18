@@ -2,8 +2,48 @@ import ReactDOM from "react-dom"
 import twc from "tailwindcss/colors"
 import * as Dialog from "@radix-ui/react-dialog"
 import { z } from "zod"
+import { SubmitHandler, useForm } from "react-hook-form"
+import {
+  IUserSigninBody,
+  userSchema,
+  userSessionSchema,
+  userSigninSchema,
+} from "../schemas/users"
+import axios, { AxiosError } from "axios"
+import { useEffect, useRef, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import { useToastStore } from "../zustand/toastStore"
 
 export function SignInModal() {
+  const [errorMessage, setErrorMessage] = useState("")
+  const { register, reset, handleSubmit } = useForm<IUserSigninBody>()
+  const { hideToast, isToastVisible, showToast } = useToastStore(state => state)
+
+  const submitHandler: SubmitHandler<IUserSigninBody> = async formData => {
+    try {
+      const { password, username } = userSigninSchema.parse(formData)
+
+      setErrorMessage("")
+      const response = await axios.post("http://localhost:3939/signin", {
+        username,
+        password,
+      })
+      const { accessToken, user } = z
+        .object({ accessToken: z.string(), user: userSessionSchema })
+        .parse(await response.data)
+      console.log({ accessToken, user })
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const [actualError] = error.issues
+        setErrorMessage(actualError.message)
+        return
+      }
+      if (error instanceof AxiosError) {
+        setErrorMessage(error.response?.data.message)
+      }
+    }
+  }
+
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
@@ -20,19 +60,75 @@ export function SignInModal() {
         </button>
       </Dialog.Trigger>
       {ReactDOM.createPortal(
-        <Dialog.Content className="absolute inset-0 grid place-content-center">
+        <Dialog.Content
+          onCloseAutoFocus={() => setErrorMessage("")}
+          className="absolute inset-0 grid place-content-center"
+        >
           <div className="bg-zinc-900 text-white p-6 rounded-lg relative z-10 border border-zinc-700">
-            <form className="">
-              <h1 className="text-2xl font-bold mb-2">Login</h1>
-              <label className="leading-none mb-1.5 block text-sm text-zinc-400">Username</label>
-              <input className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-4 bg-zinc-700 placeholder:text-zinc-500 px-4" type="text" placeholder="Seu username..." />
-              <label className="leading-none mb-1.5 block text-sm text-zinc-400 ">Senha</label>
-              <input className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-4 bg-zinc-700 placeholder:text-zinc-500 px-4" type="password" placeholder="Sua senha aqui..." />
-              <span className="text-zinc-500 text-sm block mb-2">Não possui conta? <a className="text-blue-400 underline cursor-pointer">Registre-se</a></span>
-              <button className="ml-auto grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-2 bg-zinc-700 px-4">Enviar</button>
+            <form
+              className=""
+              autoComplete="off"
+              onSubmit={handleSubmit(submitHandler)}
+            >
+              <h1 className="text-2xl font-black mb-2">Login</h1>
+              <label className="leading-none mb-1.5 block text-sm text-zinc-400">
+                Username
+              </label>
+              <input
+                className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-4 bg-zinc-800 placeholder:text-zinc-500 px-4"
+                type="text"
+                placeholder="Seu username..."
+                {...register("username")}
+              />
+              <label className="leading-none mb-1.5 block text-sm text-zinc-400 ">
+                Senha
+              </label>
+              <input
+                className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-4 bg-zinc-800 placeholder:text-zinc-500 px-4"
+                type="password"
+                placeholder="Sua senha aqui..."
+                {...register("password")}
+              />
+              <span className="text-zinc-500 text-sm block mb-2">
+                Não possui conta?{" "}
+                <a className="text-blue-400 underline cursor-pointer">
+                  Registre-se
+                </a>
+              </span>
+              <div className="flex justify-end items-center">
+                <button className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-2 bg-zinc-800 px-4">
+                  Enviar
+                </button>
+              </div>
             </form>
           </div>
           <Dialog.Close className="absolute cursor-default inset-0 bg-black/20" />
+          <AnimatePresence>
+            {errorMessage.length > 0 && (
+              <div className="absolute top-12 z-20 grid place-content-center right-0 left-0">
+                <motion.div
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -20, opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-white relative p-3 rounded-lg bg-red-500 border-red-400 border shadow-lg"
+                >
+                  <h3>{errorMessage}</h3>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    fill={twc.white}
+                    viewBox="0 0 256 256"
+                    className="p-0.5 cursor-pointer rounded-full bg-red-500 border border-red-400 absolute right-0 top-0 translate-x-1/2 -translate-y-1/2"
+                    onClick={() => setErrorMessage("")}
+                  >
+                    <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
+                  </svg>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
         </Dialog.Content>,
         document.querySelector("#portal")!
       )}

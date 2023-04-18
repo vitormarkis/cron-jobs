@@ -1,4 +1,4 @@
-const clientInfoBlacklist = ["password", "id"]
+const clientInfoBlacklist = ["password"]
 
 export function filterSensetiveInfoForClient(
   response: Record<string, any> | Array<Record<string, any>>

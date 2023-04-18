@@ -10,6 +10,7 @@ import { formatDistanceStrict } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import dayjs from "dayjs"
 import { random } from "./utils"
+import { AnimatePresence } from "framer-motion"
 import { SignInModal } from "./components/SiginInModal"
 
 export const socket = io(URL as string)
@@ -17,12 +18,14 @@ export const socket = io(URL as string)
 socket.on("connect", () => console.log("Client connected."))
 
 function App() {
-  const { data: posts, isLoading } = useQuery({
+  const { data: posts } = useQuery({
     queryKey: ["posts"],
     queryFn: () =>
       axios.get(URL + "/posts").then(r => z.array(postSchema).parse(r.data)),
     staleTime: 1000 * 60 * 1,
   })
+
+  console.log(posts)
 
   // const posts = null
   // const isLoading = true
@@ -71,7 +74,7 @@ function App() {
           </div>
           <div className="flex items-center">
             <NotificationsPopover />
-            <SignInModal />
+              <SignInModal />
           </div>
         </div>
       </header>
@@ -133,7 +136,7 @@ function App() {
                       style={{ width: random(70, 350) }}
                     />
                   </div>
-                  <button className="ml-4 rounded-full px-5 py-2 border-b border-orange-900 animate-pulse text-sm bg-orange-600 h-[32px] w-[97px]" />
+                  <button className="ml-4 rounded-full px-5 py-2 border-b border-zinc-900 animate-pulse text-sm bg-zinc-600 h-[32px] w-[97px]" />
                 </div>
               ))}
             </>
