@@ -6,11 +6,10 @@ const URL = "http://localhost:3939"
 import axios from "axios"
 import { z } from "zod"
 import { postSchema } from "./schemas/posts"
-import moment from "moment"
-moment.locale("pt-br")
 import { formatDistanceStrict } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import dayjs from "dayjs"
+import { random } from "./utils"
 
 export const socket = io(URL as string)
 
@@ -102,24 +101,36 @@ function App() {
                     </p>
                     <p>{post.text}</p>
                   </div>
-                  <button className="h-[37px] w-[97px] ml-auto rounded-full px-5 py-2 border-b border-orange-800 text-sm bg-orange-500">
-                    Fazer bid
+                  <button
+                    disabled={isAnnouncementDateInPast}
+                    className="h-[32px] text-sm w-[97px] ml-auto rounded-full grid place-content-center bg-orange-500 disabled:bg-amber-700 disabled:text-amber-950"
+                  >
+                    <p
+                      className={`${isAnnouncementDateInPast ? "italic" : ""}`}
+                    >
+                      Fazer bid
+                    </p>
                   </button>
                 </div>
               )
             })
           ) : (
             <>
-              {Array.from({ length: 2 }).map((_, i) => (
+              {Array.from({ length: 12 }).map((_, i) => (
                 <div
                   key={i}
                   className="flex items-center last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
                 >
-                  <div className="flex flex-col grow">
-                    <p className="bg-zinc-800 animate-pulse w-[120px] h-4 mb-1.5 rounded-lg" />
-                    <p className="bg-zinc-600 animate-pulse w-full h-5 rounded-lg" />
+                  <div className="flex flex-col grow gap-1">
+                    <p className="bg-zinc-800 animate-pulse h-3.5 mb-1.5 rounded-lg"
+                      style={{ width: random(175, 190) }}
+                     />
+                    <p
+                      className="bg-zinc-600 animate-pulse w-full h-[1.125rem] rounded-lg"
+                      style={{ width: random(70, 350) }}
+                    />
                   </div>
-                  <button className="ml-4 rounded-full px-5 py-2 border-b border-orange-900 animate-pulse text-sm bg-orange-600 h-[37px] w-[97px]" />
+                  <button className="ml-4 rounded-full px-5 py-2 border-b border-orange-900 animate-pulse text-sm bg-orange-600 h-[32px] w-[97px]" />
                 </div>
               ))}
             </>
