@@ -10,15 +10,35 @@ import {
   userSigninSchema,
 } from "../schemas/users"
 import axios, { AxiosError } from "axios"
-import { useEffect, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useToastStore } from "../zustand/toastStore"
 import { useAuthStore } from "../zustand/auth"
+import { RegisterModal } from "./RegisterModal"
+import { useModalStore } from "../zustand/modal"
 
-export function SignInModal() {
+export function SignInModal({
+  children,
+  modalName,
+  keyId,
+}: {
+  children: React.ReactNode
+  modalName: string
+  keyId: string
+}) {
+  const {
+    appendModalToHistory,
+    closeThisModal,
+    getLastModalOpen,
+    modalHistory,
+    setRootModalOpen,
+    rootModalOpen,
+    closeRootModal,
+  } = useModalStore(s => s)
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
-  const { register, handleSubmit } = useForm<IUserSigninBody>()
+  const { register, handleSubmit, reset } = useForm<IUserSigninBody>()
   const { login } = useAuthStore(state => state)
 
   const submitHandler: SubmitHandler<IUserSigninBody> = async formData => {
@@ -26,7 +46,7 @@ export function SignInModal() {
       const { password, username } = userSigninSchema.parse(formData)
 
       setErrorMessage("")
-      await login({ password, username }).then(() => setIsModalOpen(false))
+      await login({ password, username })
     } catch (error) {
       if (error instanceof z.ZodError) {
         const [actualError] = error.issues
@@ -41,25 +61,30 @@ export function SignInModal() {
     }
   }
 
+  const open = isModalOpen && modalHistory.length !== 0
+
+  useEffect(() => {
+    if (modalHistory.length === 1 && !rootModalOpen) {
+      setRootModalOpen(setIsModalOpen)
+    }
+  }, [])
+
+  const modalId = useMemo(() => `${modalName}-${keyId}`, [])
+
   return (
-    <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <Dialog.Trigger asChild>
-        <button className="hover:bg-zinc-800 p-1.5 rounded-lg">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="26"
-            height="26"
-            fill={twc.white}
-            viewBox="0 0 256 256"
-          >
-            <path d="M144.49,136.49l-40,40a12,12,0,0,1-17-17L107,140H24a12,12,0,0,1,0-24h83L87.51,96.49a12,12,0,0,1,17-17l40,40A12,12,0,0,1,144.49,136.49ZM192,28H136a12,12,0,0,0,0,24h52V204H136a12,12,0,0,0,0,24h56a20,20,0,0,0,20-20V48A20,20,0,0,0,192,28Z"></path>
-          </svg>
-        </button>
-      </Dialog.Trigger>
+    <Dialog.Root
+      open={open}
+      onOpenChange={open => {
+        setIsModalOpen(open)
+        open ? appendModalToHistory(modalId) : closeThisModal()
+      }}
+    >
+      <Dialog.Trigger asChild>{children}</Dialog.Trigger>
       {ReactDOM.createPortal(
         <Dialog.Content
-          onCloseAutoFocus={() => setErrorMessage("")}
-          className="absolute inset-0 grid place-content-center"
+          className={`absolute inset-0 place-content-center ${
+            getLastModalOpen() === modalId ? "grid" : "hidden"
+          }`}
         >
           <div className="bg-zinc-900 text-white p-6 rounded-lg relative z-10 border border-zinc-700">
             <form
@@ -88,9 +113,14 @@ export function SignInModal() {
               />
               <span className="text-zinc-500 text-sm block mb-2">
                 Não possui conta?{" "}
-                <a className="text-blue-400 underline cursor-pointer">
-                  Registre-se
-                </a>
+                <RegisterModal
+                  modalName="register"
+                  keyId={Math.random().toString(36).substring(2, 9)}
+                >
+                  <a className="text-blue-400 underline cursor-pointer">
+                    Registre-se
+                  </a>
+                </RegisterModal>
               </span>
               <div className="flex justify-end items-center">
                 <button className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-2 bg-zinc-800 px-4">
@@ -99,7 +129,14 @@ export function SignInModal() {
               </div>
             </form>
           </div>
-          <Dialog.Close className="absolute cursor-default inset-0 bg-black/20" />
+          <div
+            onClick={() => {
+              closeRootModal()
+              setErrorMessage("")
+              reset()
+            }}
+            className="absolute cursor-default inset-0 bg-black/20"
+          />
           <AnimatePresence>
             {errorMessage.length > 0 && (
               <div className="absolute top-12 z-20 grid place-content-center right-0 left-0">
