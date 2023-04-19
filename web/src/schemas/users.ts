@@ -8,13 +8,6 @@ export const userSchema = z.object({
   profile_pic: z.string(),
 })
 
-// export const userSigninSchema = z.object({
-//   username: userSchema.shape.username.min(
-//     ...((n: number) => ([n, `Usuário precisa ter ao menos ${n} carácteres.`]))(5)
-//   ),
-//   password: userSchema.shape.password,
-// })
-
 export const userSigninSchema = z.object({
   username: userSchema.shape.username.min(
     ...((num: number): [number, string] => {
@@ -25,7 +18,7 @@ export const userSigninSchema = z.object({
 })
 
 export const userRegisterSchema = z.object({
-  name: userSchema.shape.name.optional(),
+  name: userSchema.shape.name.nonempty(),
   username: userSchema.shape.username.nonempty(),
   password: userSchema.shape.password.nonempty(),
   profile_pic: userSchema.shape.profile_pic.optional(),

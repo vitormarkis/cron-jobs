@@ -156,10 +156,14 @@ app.post("/users", async (req: Request, res: Response) => {
       },
     })
 
-    const clientDatabaseResponse =
-      filterSensetiveInfoForClient(databaseRawResponse)
+    const userSession = filterSensetiveInfoForClient(databaseRawResponse)
 
-    return res.status(201).json(clientDatabaseResponse)
+    const accessToken = generateAccessToken(databaseRawResponse.id)
+
+    return res.status(201).json({
+      accessToken,
+      user: userSession,
+    })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       switch (error.code) {
@@ -203,10 +207,7 @@ app.post("/signin", async (req: Request, res: Response) => {
 
     const user = filterSensetiveInfoForClient(userFromDatabase)
 
-    const accessToken = jwt.sign({}, process.env.SERVER_SECRET as string, {
-      subject: userFromDatabase.id,
-      expiresIn: "20m",
-    })
+    const accessToken = generateAccessToken(userFromDatabase.id)
 
     return res.json({
       accessToken,
@@ -216,6 +217,14 @@ app.post("/signin", async (req: Request, res: Response) => {
     return res.status(400).json(error)
   }
 })
+
+function generateAccessToken(sub: string | number, expiresIn: string = "20m") {
+  const subject = typeof sub === "number" ? String(sub) : sub
+  return jwt.sign({}, process.env.SERVER_SECRET as string, {
+    subject,
+    expiresIn,
+  })
+}
 
 serverHTTP.listen(process.env.PORT, () =>
   console.log("[server] Server is running on port " + process.env.PORT)

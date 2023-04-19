@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import {
+  IUserRegisterBody,
   IUserSession,
   IUserSigninBody,
   userSessionSchema,
@@ -13,6 +14,7 @@ interface AuthStore {
   isAuth: boolean
   token: string | null
   login: (credentials: IUserSigninBody) => Promise<void>
+  register: (credentials: IUserRegisterBody) => Promise<void>
   logout: () => void
 }
 
@@ -26,6 +28,16 @@ export const useAuthStore = create<AuthStore>(
       login: async credentials => {
         const response = await axios.post(
           "http://localhost:3939/signin",
+          credentials
+        )
+        const { accessToken, user } = z
+          .object({ accessToken: z.string(), user: userSessionSchema })
+          .parse(await response.data)
+        set({ user, token: accessToken, isAuth: true })
+      },
+      register: async credentials => {
+        const response = await axios.post(
+          "http://localhost:3939/users",
           credentials
         )
         const { accessToken, user } = z
