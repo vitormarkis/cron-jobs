@@ -6,6 +6,10 @@
   font-family: "Inter";
 }
 
+.no-duration {
+  transition-duration: 0ms !important;
+}
+
 .outfit {
   font-family: "Outfit";
 }
