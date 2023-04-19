@@ -42,7 +42,7 @@ function App() {
   console.log(isLoading)
 
   return (
-    <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-colors [&_*]:duration-200">
+    <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-all [&_*]:duration-200">
       <header className="bg-zinc-950">
         <div className="mx-auto max-w-7xl w-full px-4 flex justify-between items-center py-2">
           <div className="flex gap-2 items-center leading-none">
