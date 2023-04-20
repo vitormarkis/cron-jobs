@@ -49,7 +49,7 @@ io.on("connection", socket => {
     })
 
     if (userPosts) {
-      userPosts.Post.map(post => {
+      userPosts.Post.forEach(post => {
         socket.join(post.id)
       })
     }
@@ -61,11 +61,12 @@ io.on("connection", socket => {
   })
 
   socket.on("make_bid", async payload => {
-    const { post_id, username } = payload
+    const { post_id, username, post_text } = payload
 
     socket.to(post_id).emit("bid_was_made", {
-      action: "fez um lance",
+      action: "fez um lance no post ",
       id: Math.random().toString(36).substring(0, 9),
+      post_text,
       username,
     } as INotification)
   })

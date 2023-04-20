@@ -32,7 +32,7 @@ export const Post: React.FC<Props> = ({ post }) => {
     { locale: ptBR, addSuffix: true }
   )
 
-  const handleMakeBid = (post_id: string) => {
+  const handleMakeBid = (post_id: string, post_text: string) => {
     return async () => {
       await axios.post(
         `http://localhost:3939/bid/${post_id}`,
@@ -43,7 +43,7 @@ export const Post: React.FC<Props> = ({ post }) => {
       )
       if (user && user.username) {
         socket.emit("join_post", { post_id })
-        socket.emit("make_bid", { post_id, username: user.username })
+        socket.emit("make_bid", { post_id, username: user.username, post_text })
       }
     }
   }
@@ -93,7 +93,7 @@ export const Post: React.FC<Props> = ({ post }) => {
               className={`${
                 isAnnouncementDateInPast || userHaveMadeBid ? "italic" : ""
               } ${userHaveMadeBid ? "" : ""}`}
-              onClick={handleMakeBid(post.id)}
+              onClick={handleMakeBid(post.id, post.text)}
             >
               {userHaveMadeBid ? "Bid feito" : "Fazer bid"}
             </p>

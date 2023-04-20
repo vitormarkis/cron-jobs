@@ -4,6 +4,7 @@ import { userSchema } from "./users"
 export const notificationSchema = z.object({
   id: z.string().nonempty(),
   action: z.string().nonempty(),
+  post_text: z.string().nonempty(),
   username: userSchema.shape.username.nonempty(),
 })
 
