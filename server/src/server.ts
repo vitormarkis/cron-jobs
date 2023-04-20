@@ -122,9 +122,18 @@ app.post("/posts", ensureAuth, async (req: Request, res: Response) => {
 })
 
 app.get("/posts", ensureAuth, async (req: Request, res: Response) => {
-  const postsFromDatabase = await prisma.post.findMany()
+  const postsFromDatabase = await prisma.post.findMany({
+    include: {
+      user: true,
+    },
+  })
 
-  return res.json(postsFromDatabase)
+  const sessionPosts = postsFromDatabase.map(post => ({
+    ...post,
+    user: filterSensetiveInfoForClient(post.user),
+  }))
+
+  return res.json(sessionPosts)
 })
 
 app.get("/whoami", ensureAuth, async (req: Request, res: Response) => {

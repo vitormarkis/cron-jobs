@@ -6,7 +6,7 @@ import dayjs from "dayjs"
 import { io } from "socket.io-client"
 import { z } from "zod"
 import { Header } from "./components/Header"
-import { postSchema } from "./schemas/posts"
+import { postSchema, postSessionSchema } from "./schemas/posts"
 import { random } from "./utils"
 import { useAuthStore } from "./zustand/auth"
 import { useModalStore } from "./zustand/modal"
@@ -32,7 +32,8 @@ function App() {
     queryFn: () =>
       axios.get(URL + "/posts", { headers }).then(async r => {
         await new Promise(res => setTimeout(res, 1200))
-        return z.array(postSchema).parse(r.data)
+        console.log(r.data)
+        return z.array(postSessionSchema).parse(r.data)
       }),
     staleTime: 1000 * 60 * 1,
     retry: false,

@@ -9,13 +9,16 @@ import {
   userSessionSchema,
   userSigninSchema,
 } from "../schemas/users"
-import axios, { AxiosError } from "axios"
+import axios, { AxiosError, AxiosHeaders } from "axios"
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useToastStore } from "../zustand/toastStore"
 import { useAuthStore } from "../zustand/auth"
 import { RegisterModal } from "./RegisterModal"
 import { useModalStore } from "../zustand/modal"
+import { IPostBody, postBodySchema } from "../schemas/posts"
+import { useMutation } from "@tanstack/react-query"
+import { queryClient } from "../services/queryClient"
 
 export function NewPostModal({
   children,
@@ -38,29 +41,42 @@ export function NewPostModal({
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
-  const { register, handleSubmit, reset } = useForm<IUserSigninBody>()
-  const { login } = useAuthStore(state => state)
+  const { register, handleSubmit, reset } = useForm<IPostBody>()
+  const { token } = useAuthStore()
+  const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
 
-  const submitHandler: SubmitHandler<IUserSigninBody> = async formData => {}
-  // const submitHandler: SubmitHandler<IUserSigninBody> = async formData => {
-  //   try {
-  //     const { password, username } = userSigninSchema.parse(formData)
+  const { mutateAsync, isLoading } = useMutation({
+    mutationFn: ({ announcement_date, text }: IPostBody) =>
+      axios.post(
+        "http://localhost:3939/posts",
+        { announcement_date: new Date(announcement_date).toISOString(), text },
+        { headers }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["posts", token])
+      closeRootModal()
+    },
+  })
 
-  //     setErrorMessage("")
-  //     await login({ password, username })
-  //   } catch (error) {
-  //     if (error instanceof z.ZodError) {
-  //       const [actualError] = error.issues
-  //       setErrorMessage(actualError.message)
-  //       return
-  //     }
-  //     if (error instanceof AxiosError) {
-  //       setErrorMessage(error.response?.data.message)
-  //       return
-  //     }
-  //     console.log({ error })
-  //   }
-  // }
+  const submitHandler: SubmitHandler<IPostBody> = async formData => {
+    try {
+      const { announcement_date, text } = postBodySchema.parse(formData)
+
+      setErrorMessage("")
+      await mutateAsync({ announcement_date, text })
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const [actualError] = error.issues
+        setErrorMessage(actualError.message)
+        return
+      }
+      if (error instanceof AxiosError) {
+        setErrorMessage(error.response?.data.message)
+        return
+      }
+      console.log({ error })
+    }
+  }
 
   const open = isModalOpen && modalHistory.length !== 0
 
@@ -95,36 +111,29 @@ export function NewPostModal({
             >
               <h1 className="text-2xl font-black mb-2">Novo post</h1>
               <label className="leading-none mb-1.5 block text-sm text-zinc-400">
-                Username
+                Texto
               </label>
               <input
-                className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-4 bg-zinc-800 placeholder:text-zinc-500 px-4"
+                className="grid place-content-center w-full h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-4 bg-zinc-800 placeholder:text-zinc-500 px-4"
                 type="text"
-                placeholder="Seu username..."
-                {...register("username")}
+                placeholder="Escreva o conteúdo do seu post..."
+                {...register("text")}
               />
               <label className="leading-none mb-1.5 block text-sm text-zinc-400 ">
-                Senha
+                Data de encerramento
               </label>
               <input
-                className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-4 bg-zinc-800 placeholder:text-zinc-500 px-4"
-                type="password"
-                placeholder="Sua senha aqui..."
-                {...register("password")}
+                className="grid place-content-center w-full h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-4 bg-zinc-800 placeholder:text-zinc-500 px-4"
+                type="date"
+                placeholder="Data de encerramento do post..."
+                defaultValue={new Date().toISOString()}
+                {...register("announcement_date")}
               />
-              <span className="text-zinc-500 text-sm block mb-2">
-                Não possui conta?{" "}
-                <RegisterModal
-                  modalName="register"
-                  keyId={Math.random().toString(36).substring(2, 9)}
-                >
-                  <a className="text-blue-400 underline cursor-pointer">
-                    Registre-se
-                  </a>
-                </RegisterModal>
-              </span>
               <div className="flex justify-end items-center">
-                <button className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-2 bg-zinc-800 px-4">
+                <button
+                  disabled={isLoading}
+                  className="grid place-content-center h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-2 bg-zinc-800 px-4"
+                >
                   Enviar
                 </button>
               </div>
