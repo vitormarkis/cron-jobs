@@ -45,4 +45,5 @@ model Bids {
 
   @@unique([user_id, post_id])
   @@map("bids")
+  
 }

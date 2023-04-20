@@ -11,6 +11,7 @@ import dotenv from "dotenv"
 import { Server } from "socket.io"
 import http from "http"
 import cors from "cors"
+import { bidsSchema } from "./schemas/bids"
 dotenv.config()
 
 const app = express()
@@ -58,6 +59,26 @@ async function ensureAuth(req: Request, res: Response, next: NextFunction) {
 
   next()
 }
+
+app.post("/bids", ensureAuth, async (req: Request, res: Response) => {
+  try {
+    const { post_id } = bidsSchema.parse(req.body)
+    const { user_id } = req
+
+    const databaseRawResponse = await prisma.bids.create({
+      data: {
+        user_id,
+        post_id
+      },
+    })
+
+    return res.status(201).json({
+      databaseRawResponse,
+    })
+  } catch (error) {
+    return res.json(error)
+  }
+})
 
 app.get("/run-query", async (req: Request, res: Response) => {
   // await prisma.$queryRaw`

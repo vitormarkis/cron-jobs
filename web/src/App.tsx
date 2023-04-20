@@ -6,10 +6,11 @@ import dayjs from "dayjs"
 import { io } from "socket.io-client"
 import { z } from "zod"
 import { Header } from "./components/Header"
-import { postSchema, postSessionSchema } from "./schemas/posts"
+import { IPostSession, postSchema, postSessionSchema } from "./schemas/posts"
 import { random } from "./utils"
 import { useAuthStore } from "./zustand/auth"
 import { useModalStore } from "./zustand/modal"
+import { useEffect, useState } from "react"
 const URL = "http://localhost:3939"
 
 export const socket = io(URL as string)
@@ -19,27 +20,39 @@ socket.on("connect", () => console.log("Client connected."))
 function App() {
   const { token, isAuth, user } = useAuthStore(state => state)
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
+  
+  const [posts, setPosts] = useState<IPostSession[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    axios
+      .get(URL + "/posts", { headers })
+      .then(r => {
+        const feedPosts = z.array(postSessionSchema).parse(r.data)
+        setPosts(feedPosts)
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
 
   const { modalHistory } = useModalStore(state => state)
-  console.log({ modalHistory })
 
-  const {
-    data: posts,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["posts", token],
-    queryFn: () =>
-      axios.get(URL + "/posts", { headers }).then(async r => {
-        // await new Promise(res => setTimeout(res, 1200))
-        console.log(r.data)
-        return z.array(postSessionSchema).parse(r.data)
-      }),
-    staleTime: 1000 * 60 * 1,
-    retry: false,
-    refetchOnWindowFocus: false,
-    enabled: isAuth,
-  })
+  // const {
+  //   data: posts,
+  //   isLoading,
+  //   isError,
+  //   error
+  // } = useQuery({
+  //   queryKey: ["posts", token],
+  //   queryFn: () =>
+  //     axios.get(URL + "/posts", { headers }).then(async r => {
+  //       console.log(r.data)
+  //       return z.array(postSessionSchema).parse(r.data)
+  //     }),
+  //   staleTime: 1000 * 60 * 1,
+  //   retry: false,
+  //   refetchOnWindowFocus: false,
+  //   enabled: isAuth,
+  // })
 
   return (
     <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-colors [&_*]:duration-200">
