@@ -146,12 +146,20 @@ app.get("/posts", ensureAuth, async (req: Request, res: Response) => {
   const postsFromDatabase = await prisma.post.findMany({
     include: {
       user: true,
-      post_bids: true,
+      post_bids: {
+        include: {
+          user: true,
+        },
+      },
     },
   })
 
   const sessionPosts = postsFromDatabase.map(post => ({
     ...post,
+    post_bids: post.post_bids.map(bid => ({
+      ...bid,
+      user: filterSensetiveInfoForClient(bid.user),
+    })),
     user: filterSensetiveInfoForClient(post.user),
   }))
 

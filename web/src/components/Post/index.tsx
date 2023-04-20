@@ -43,36 +43,39 @@ export const Post: React.FC<Props> = ({ post }) => {
     }
   }
 
+  const isPostOwner = user ? post.user_id === user.id : null
+
   return (
     <div
       key={post.id}
-      className="flex gap-3 items-center last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
+      className="flex flex-col last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
     >
-      <div>
-        <div className="flex flex-col xs:flex-row items-start xs:items-center gap-2">
-          {post.user.username === user?.username ? (
-            <p className="text-zinc-200 px-1.5 bg-emerald-600 rounded-full text-xs">
-              Você
+      <div className="flex gap-3 items-center">
+        <div>
+          <div className="flex flex-col xs:flex-row items-start xs:items-center gap-2">
+            {post.user.username === user?.username ? (
+              <p className="text-zinc-200 px-1.5 bg-emerald-600 rounded-full text-xs">
+                Você
+              </p>
+            ) : (
+              <p className="text-zinc-200 px-1.5 bg-slate-500 rounded-full text-xs">
+                {post.user.username}
+              </p>
+            )}
+            <p className="text-zinc-500 text-xs">
+              {post.announcement_date.substring(0, 10)} -{" "}
+              <span>
+                {isAnnouncementDateInPast ? `encerrou ` : `encerra `}{" "}
+                {announcementDateString}
+              </span>
             </p>
-          ) : (
-            <p className="text-zinc-200 px-1.5 bg-slate-500 rounded-full text-xs">
-              {post.user.username}
-            </p>
-          )}
-          <p className="text-zinc-500 text-xs">
-            {post.announcement_date.substring(0, 10)} -{" "}
-            <span>
-              {isAnnouncementDateInPast ? `encerrou ` : `encerra `}{" "}
-              {announcementDateString}
-            </span>
-          </p>
+          </div>
+          <p className="whitespace-normal my-1">{post.text}</p>
         </div>
-        <p className="whitespace-normal">{post.text}</p>
-      </div>
-      {post.user_id === user?.id ? null : (
-        <button
-          disabled={isAnnouncementDateInPast || userHaveMadeBid}
-          className={`h-[32px] shrink-0 text-sm w-[97px] ml-auto rounded-full grid place-content-center bg-orange-500 
+        {post.user_id === user?.id ? null : (
+          <button
+            disabled={isAnnouncementDateInPast || userHaveMadeBid}
+            className={`h-[32px] shrink-0 text-sm w-[97px] ml-auto rounded-full grid place-content-center bg-orange-500 
           ${
             userHaveMadeBid
               ? `bg-amber-700 text-amber-950`
@@ -80,17 +83,30 @@ export const Post: React.FC<Props> = ({ post }) => {
               ? `bg-zinc-700 text-zinc-500`
               : ""
           }`}
-        >
-          <p
-            className={`${
-              isAnnouncementDateInPast || userHaveMadeBid ? "italic" : ""
-            } ${userHaveMadeBid ? "" : ""}`}
-            onClick={handleMakeBid(post.id)}
           >
-            {userHaveMadeBid ? "Bid feito" : "Fazer bid"}
-          </p>
-        </button>
-      )}
+            <p
+              className={`${
+                isAnnouncementDateInPast || userHaveMadeBid ? "italic" : ""
+              } ${userHaveMadeBid ? "" : ""}`}
+              onClick={handleMakeBid(post.id)}
+            >
+              {userHaveMadeBid ? "Bid feito" : "Fazer bid"}
+            </p>
+          </button>
+        )}
+      </div>
+      <div className="flex gap-1 flex-wrap mt-1">
+        {isPostOwner
+          ? post.post_bids.map(bid => (
+              <p
+                key={bid.id}
+                className="text-[10px] px-2 rounded-full bg-zinc-800 border-t border-t-zinc-700 border-b border-b-zinc-900 text-zinc-400 font-medium self-start"
+              >
+                {bid.user.name}
+              </p>
+            ))
+          : null}
+      </div>
     </div>
   )
 }

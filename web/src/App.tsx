@@ -57,7 +57,7 @@ function App() {
     <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-colors [&_*]:duration-200">
       <Header />
       <main className="flex grow">
-        <section className="mx-auto scroll-thin max-w-lg w-full h-[calc(100vh_-_54px)] bg-zinc-900 flex flex-col overflow-y-scroll">
+        <section className="mx-auto scroll-thin max-w-2xl w-full h-[calc(100vh_-_54px)] bg-zinc-900 flex flex-col overflow-y-scroll">
           {isLoading && !posts && isAuth ? (
             <>
               {Array.from({ length: 8 }).map((_, i) => (

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { userSessionSchema } from "./users"
 
 export const bidSchema = z.object({
   id: z.string(),
@@ -6,6 +7,7 @@ export const bidSchema = z.object({
   user_id: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
+  user: userSessionSchema,
 })
 
 export const bidBodySchema = z.object({
