@@ -3,9 +3,11 @@ import { NotificationsPopover } from "../NotificationsPopover"
 import { SignInModal } from "../SiginInModal"
 import { useAuthStore } from "../../zustand/auth"
 import { NewPostModal } from "../NewPostModal"
+import { useNotificationStore } from "../../zustand/notifications"
 const URL = "http://localhost:3939"
 
 export function Header() {
+  const { hasNotification } = useNotificationStore()
   const { token, isAuth, logout, user } = useAuthStore(state => state)
 
   return (
@@ -45,7 +47,7 @@ export function Header() {
             </NewPostModal>
           ) : null}
           <NotificationsPopover>
-            <button className="hover:bg-zinc-800 p-1.5 rounded-lg  group">
+            <button className="hover:bg-zinc-800 relative p-1.5 rounded-lg  group">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="26"
@@ -56,6 +58,13 @@ export function Header() {
               >
                 <path d="M225.29,165.93C216.61,151,212,129.57,212,104a84,84,0,0,0-168,0c0,25.58-4.59,47-13.27,61.93A20.08,20.08,0,0,0,30.66,186,19.77,19.77,0,0,0,48,196H84.18a44,44,0,0,0,87.64,0H208a19.77,19.77,0,0,0,17.31-10A20.08,20.08,0,0,0,225.29,165.93ZM128,212a20,20,0,0,1-19.6-16h39.2A20,20,0,0,1,128,212ZM54.66,172C63.51,154,68,131.14,68,104a60,60,0,0,1,120,0c0,27.13,4.48,50,13.33,68Z"></path>
               </svg>
+              {hasNotification() ? <p style={{
+                top: "50%",
+                position: 'absolute',
+                right: "50%",
+                transform: "translate(50%, -60%)",
+                fontSize: 12,
+              }}>+</p> : null}
             </button>
           </NotificationsPopover>
 
