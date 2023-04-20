@@ -17,7 +17,7 @@ export const socket = io(URL as string)
 socket.on("connect", () => console.log("Client connected."))
 
 function App() {
-  const { token, isAuth } = useAuthStore(state => state)
+  const { token, isAuth, user } = useAuthStore(state => state)
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
 
   const { modalHistory } = useModalStore(state => state)
@@ -31,7 +31,7 @@ function App() {
     queryKey: ["posts", token],
     queryFn: () =>
       axios.get(URL + "/posts", { headers }).then(async r => {
-        await new Promise(res => setTimeout(res, 1200))
+        // await new Promise(res => setTimeout(res, 1200))
         console.log(r.data)
         return z.array(postSessionSchema).parse(r.data)
       }),
@@ -48,7 +48,7 @@ function App() {
         <section className="mx-auto scroll-thin max-w-lg w-full h-[calc(100vh_-_54px)] bg-zinc-900 flex flex-col overflow-y-scroll">
           {isLoading && !posts && isAuth ? (
             <>
-              {Array.from({ length: 4 }).map((_, i) => (
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
                   className="flex items-center last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
@@ -81,28 +81,43 @@ function App() {
               return (
                 <div
                   key={post.id}
-                  className="flex items-center last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
+                  className="flex gap-3 items-center last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
                 >
                   <div>
-                    <p className="text-zinc-500 text-xs">
-                      {post.announcement_date.substring(0, 10)} -{" "}
-                      <span>
-                        {isAnnouncementDateInPast ? `encerrou ` : `encerra `}{" "}
-                        {announcementDateString}
-                      </span>
-                    </p>
-                    <p>{post.text}</p>
+                    <div className="flex flex-col xs:flex-row items-start xs:items-center gap-2">
+                      {post.user.username === user?.username ? (
+                        <p className="text-zinc-200 px-1.5 bg-emerald-600 rounded-full text-xs">
+                          Você
+                        </p>
+                      ) : (
+                        <p className="text-zinc-200 px-1.5 bg-slate-500 rounded-full text-xs">
+                          {post.user.username}
+                        </p>
+                      )}
+                      <p className="text-zinc-500 text-xs">
+                        {post.announcement_date.substring(0, 10)} -{" "}
+                        <span>
+                          {isAnnouncementDateInPast ? `encerrou ` : `encerra `}{" "}
+                          {announcementDateString}
+                        </span>
+                      </p>
+                    </div>
+                    <p className="whitespace-normal">{post.text}</p>
                   </div>
-                  <button
-                    disabled={isAnnouncementDateInPast}
-                    className="h-[32px] text-sm w-[97px] ml-auto rounded-full grid place-content-center bg-orange-500 disabled:bg-amber-700 disabled:text-amber-950"
-                  >
-                    <p
-                      className={`${isAnnouncementDateInPast ? "italic" : ""}`}
+                  {post.user_id === user?.id ? null : (
+                    <button
+                      disabled={isAnnouncementDateInPast}
+                      className="h-[32px] shrink-0 text-sm w-[97px] ml-auto rounded-full grid place-content-center bg-orange-500 disabled:bg-amber-700 disabled:text-amber-950"
                     >
-                      Fazer bid
-                    </p>
-                  </button>
+                      <p
+                        className={`${
+                          isAnnouncementDateInPast ? "italic" : ""
+                        }`}
+                      >
+                        Fazer bid
+                      </p>
+                    </button>
+                  )}
                 </div>
               )
             })
