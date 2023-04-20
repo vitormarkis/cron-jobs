@@ -44,26 +44,38 @@ export function NewPostModal({
   const { register, handleSubmit, reset } = useForm<IPostBody>()
   const { token } = useAuthStore()
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const { mutateAsync, isLoading } = useMutation({
-    mutationFn: ({ announcement_date, text }: IPostBody) =>
-      axios.post(
-        "http://localhost:3939/posts",
-        { announcement_date: new Date(announcement_date).toISOString(), text },
-        { headers }
-      ),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["posts", token])
-      closeRootModal()
-    },
-  })
+  // const { mutateAsync, isLoading } = useMutation({
+  //   mutationFn: ({ announcement_date, text }: IPostBody) =>
+  //     axios.post(
+  //       "http://localhost:3939/posts",
+  //       { announcement_date: new Date(announcement_date).toISOString(), text },
+  //       { headers }
+  //     ),
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries(["posts", token])
+  //     closeRootModal()
+  //   },
+  // })
 
   const submitHandler: SubmitHandler<IPostBody> = async formData => {
     try {
       const { announcement_date, text } = postBodySchema.parse(formData)
-
       setErrorMessage("")
-      await mutateAsync({ announcement_date, text })
+      setIsLoading(true)
+      await axios
+        .post(
+          "http://localhost:3939/posts",
+          {
+            announcement_date: new Date(announcement_date).toISOString(),
+            text,
+          },
+          { headers }
+        )
+        .then(() => setIsLoading(false))
+
+      // await mutateAsync({ announcement_date, text })
     } catch (error) {
       if (error instanceof z.ZodError) {
         const [actualError] = error.issues

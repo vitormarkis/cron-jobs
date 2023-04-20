@@ -11,6 +11,7 @@ import { random } from "./utils"
 import { useAuthStore } from "./zustand/auth"
 import { useModalStore } from "./zustand/modal"
 import { useEffect, useState } from "react"
+import { Post } from "./components/Post"
 const URL = "http://localhost:3939"
 
 export const socket = io(URL as string)
@@ -18,7 +19,7 @@ export const socket = io(URL as string)
 socket.on("connect", () => console.log("Client connected."))
 
 function App() {
-  const { token, isAuth, user } = useAuthStore(state => state)
+  const { token, isAuth } = useAuthStore(state => state)
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
 
   const [posts, setPosts] = useState<IPostSession[]>([])
@@ -52,18 +53,6 @@ function App() {
   //   enabled: isAuth,
   // })
 
-  const handleMakeBid = (postId: string) => {
-    return async () => {
-      await axios.post(
-        `http://localhost:3939/bid/${postId}`,
-        {},
-        {
-          headers,
-        }
-      )
-    }
-  }
-
   return (
     <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-colors [&_*]:duration-200">
       <Header />
@@ -91,60 +80,7 @@ function App() {
               ))}
             </>
           ) : posts ? (
-            posts.map(post => {
-              const isAnnouncementDateInPast = dayjs(
-                post.announcement_date
-              ).isBefore(dayjs())
-              const announcementDateString = formatDistanceStrict(
-                new Date(post.announcement_date),
-                new Date(),
-                { locale: ptBR, addSuffix: true }
-              )
-
-              return (
-                <div
-                  key={post.id}
-                  className="flex gap-3 items-center last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-6 py-2"
-                >
-                  <div>
-                    <div className="flex flex-col xs:flex-row items-start xs:items-center gap-2">
-                      {post.user.username === user?.username ? (
-                        <p className="text-zinc-200 px-1.5 bg-emerald-600 rounded-full text-xs">
-                          Você
-                        </p>
-                      ) : (
-                        <p className="text-zinc-200 px-1.5 bg-slate-500 rounded-full text-xs">
-                          {post.user.username}
-                        </p>
-                      )}
-                      <p className="text-zinc-500 text-xs">
-                        {post.announcement_date.substring(0, 10)} -{" "}
-                        <span>
-                          {isAnnouncementDateInPast ? `encerrou ` : `encerra `}{" "}
-                          {announcementDateString}
-                        </span>
-                      </p>
-                    </div>
-                    <p className="whitespace-normal">{post.text}</p>
-                  </div>
-                  {post.user_id === user?.id ? null : (
-                    <button
-                      disabled={isAnnouncementDateInPast}
-                      className="h-[32px] shrink-0 text-sm w-[97px] ml-auto rounded-full grid place-content-center bg-orange-500 disabled:bg-amber-700 disabled:text-amber-950"
-                    >
-                      <p
-                        className={`${
-                          isAnnouncementDateInPast ? "italic" : ""
-                        }`}
-                        onClick={handleMakeBid(post.id)}
-                      >
-                        Fazer bid
-                      </p>
-                    </button>
-                  )}
-                </div>
-              )
-            })
+            posts.map(post => <Post key={post.id} post={post} />)
           ) : (
             <div className="mt-12 text-zinc-500">
               <h3 className="text-center">Não há nada para ver aqui :/</h3>
