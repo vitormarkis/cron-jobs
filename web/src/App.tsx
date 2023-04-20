@@ -20,7 +20,7 @@ socket.on("connect", () => console.log("Client connected."))
 function App() {
   const { token, isAuth, user } = useAuthStore(state => state)
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
-  
+
   const [posts, setPosts] = useState<IPostSession[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -32,9 +32,7 @@ function App() {
         setPosts(feedPosts)
       })
       .finally(() => setIsLoading(false))
-  }, [])
-
-  const { modalHistory } = useModalStore(state => state)
+  }, [token])
 
   // const {
   //   data: posts,
@@ -53,6 +51,18 @@ function App() {
   //   refetchOnWindowFocus: false,
   //   enabled: isAuth,
   // })
+
+  const handleMakeBid = (postId: string) => {
+    return async () => {
+      await axios.post(
+        `http://localhost:3939/bid/${postId}`,
+        {},
+        {
+          headers,
+        }
+      )
+    }
+  }
 
   return (
     <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-colors [&_*]:duration-200">
@@ -126,6 +136,7 @@ function App() {
                         className={`${
                           isAnnouncementDateInPast ? "italic" : ""
                         }`}
+                        onClick={handleMakeBid(post.id)}
                       >
                         Fazer bid
                       </p>

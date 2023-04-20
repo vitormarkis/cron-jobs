@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { userSchema } from "./users"
+import { bidSchema } from "./bids"
 
 export const postSchema = z.object({
   id: z.string(),
@@ -18,6 +19,7 @@ export const postSessionSchema = postSchema.merge(
       profile_pic: userSchema.shape.profile_pic.nullable(),
       username: userSchema.shape.username,
     }),
+    post_bids: z.array(bidSchema),
   })
 )
 
