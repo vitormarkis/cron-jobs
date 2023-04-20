@@ -6,6 +6,7 @@ import { IPostSession } from "../../schemas/posts"
 import { useAuthStore } from "../../zustand/auth"
 
 import React from "react"
+import { socket } from "../../App"
 
 interface Props {
   post: IPostSession
@@ -31,15 +32,19 @@ export const Post: React.FC<Props> = ({ post }) => {
     { locale: ptBR, addSuffix: true }
   )
 
-  const handleMakeBid = (postId: string) => {
+  const handleMakeBid = (post_id: string) => {
     return async () => {
       await axios.post(
-        `http://localhost:3939/bid/${postId}`,
+        `http://localhost:3939/bid/${post_id}`,
         {},
         {
           headers,
         }
       )
+      if (user && user.username) {
+        socket.emit("join_post", { post_id })
+        socket.emit("make_bid", { post_id, username: user.username })
+      }
     }
   }
 

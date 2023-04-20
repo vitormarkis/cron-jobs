@@ -1,6 +1,10 @@
 import express, { NextFunction, Request, Response } from "express"
 import { prisma } from "./services/prisma"
-import { userRegisterSchema, userSigninSchema } from "./schemas/users"
+import {
+  userRegisterSchema,
+  userSessionSchema,
+  userSigninSchema,
+} from "./schemas/users"
 import { filterSensetiveInfoForClient } from "./helpers"
 import { Bids, Prisma } from "@prisma/client"
 import { postSchemaBody } from "./schemas/posts"
@@ -12,6 +16,7 @@ import { Server } from "socket.io"
 import http from "http"
 import cors from "cors"
 import { bidBodySchema } from "./schemas/bids"
+import { INotification } from "./schemas/notifications"
 dotenv.config()
 
 const app = express()
@@ -27,8 +32,42 @@ const io = new Server(serverHTTP, {
 const scheduledJobs = new Map()
 
 io.on("connection", socket => {
-  socket.on("join_room", room => {
-    socket.join(room)
+  socket.on("join_room", async user => {
+    const { id } = userSessionSchema.parse(user)
+    const userPosts = await prisma.user.findFirst({
+      where: {
+        id,
+      },
+      select: {
+        Post: {
+          select: {
+            id: true,
+            text: true,
+          },
+        },
+      },
+    })
+
+    if (userPosts) {
+      userPosts.Post.map(post => {
+        socket.join(post.id)
+      })
+    }
+  })
+
+  socket.on("join_post", async payload => {
+    const { post_id } = payload
+    socket.join(post_id)
+  })
+
+  socket.on("make_bid", async payload => {
+    const { post_id, username } = payload
+
+    socket.to(post_id).emit("bid_was_made", {
+      action: "fez um lance",
+      id: Math.random().toString(36).substring(0, 9),
+      username,
+    } as INotification)
   })
 })
 
@@ -85,7 +124,7 @@ app.get("/run-query", async (req: Request, res: Response) => {
   //   ALTER TABLE
   // `
 
-  // await prisma.post.deleteMany()
+  await prisma.bids.deleteMany()
 
   return res.end()
 })
@@ -245,7 +284,6 @@ app.post("/signin", async (req: Request, res: Response) => {
     }
 
     const user = filterSensetiveInfoForClient(userFromDatabase)
-
     const accessToken = generateAccessToken(userFromDatabase.id)
 
     return res.json({

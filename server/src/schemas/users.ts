@@ -20,6 +20,14 @@ export const userRegisterSchema = z.object({
   profile_pic: userSchema.shape.profile_pic.optional(),
 })
 
+export const userSessionSchema = z.object({
+  id: userSchema.shape.id.nonempty(),
+  name: userSchema.shape.name.nullable(),
+  username: userSchema.shape.username.nonempty(),
+  profile_pic: userSchema.shape.profile_pic.nullable(),
+})
+
 export type IUser = z.infer<typeof userSchema>
 export type IUserSigninBody = z.infer<typeof userSigninSchema>
 export type IUserRegisterBody = z.infer<typeof userRegisterSchema>
+export type IUserSession = z.infer<typeof userSessionSchema>

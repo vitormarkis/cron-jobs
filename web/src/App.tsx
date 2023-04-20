@@ -12,6 +12,7 @@ import { useAuthStore } from "./zustand/auth"
 import { useModalStore } from "./zustand/modal"
 import { useEffect, useState } from "react"
 import { Post } from "./components/Post"
+import { INotification } from "./schemas/notifications"
 const URL = "http://localhost:3939"
 
 export const socket = io(URL as string)
@@ -19,7 +20,7 @@ export const socket = io(URL as string)
 socket.on("connect", () => console.log("Client connected."))
 
 function App() {
-  const { token, isAuth } = useAuthStore(state => state)
+  const { token, isAuth, user } = useAuthStore(state => state)
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
 
   const [posts, setPosts] = useState<IPostSession[]>([])
@@ -53,6 +54,11 @@ function App() {
   //   enabled: isAuth,
   // })
 
+  useEffect(() => {
+    if(user) socket.emit("join_room", user)
+  }, [user])
+
+  
   return (
     <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-colors [&_*]:duration-200">
       <Header />
