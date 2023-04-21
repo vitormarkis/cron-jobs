@@ -2,21 +2,42 @@ import * as Popover from "@radix-ui/react-popover"
 import twc from "tailwindcss/colors"
 import ReactDOM from "react-dom"
 import { useEffect, useState } from "react"
-import { INotification } from "../schemas/notifications"
+import {
+  INotification,
+  notificationSchema,
+  notificationSessionSchema,
+} from "../schemas/notifications"
 import { socket } from "../App"
 import { useNotificationStore } from "../zustand/notifications"
+import { useQuery } from "@tanstack/react-query"
+import { useAuthStore } from "../zustand/auth"
+import axios, { AxiosHeaders } from "axios"
+import { queryClient } from "../services/queryClient"
+import { z } from "zod"
 
 export function NotificationsPopover({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { addNewNotification, notifications, hasNotification } =
-    useNotificationStore()
+  const { token, isAuth, user } = useAuthStore(state => state)
+  const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
+
+  const { data: notifications, isLoading } = useQuery({
+    queryKey: ["notifications", token],
+    queryFn: () =>
+      axios
+        .get("http://localhost:3939/user/notifications", { headers })
+        .then(r => z.array(notificationSessionSchema).parse(r.data)),
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: isAuth,
+  })
 
   useEffect(() => {
     socket.on("bid_was_made", (notification: INotification) => {
-      addNewNotification(notification)
+      queryClient.invalidateQueries(["notifications", token])
     })
   }, [socket])
 
@@ -26,14 +47,14 @@ export function NotificationsPopover({
       {ReactDOM.createPortal(
         <Popover.Content align="end">
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 text-white shadow-lg shadow-black/20 max-h-[75vh] overflow-y-scroll scroll-thin text-sm">
-            {hasNotification() ? (
-              notifications.map(({ action, id, username, post_text }) => (
+            {notifications ? (
+              notifications.map(not => (
                 <div
-                  key={id}
+                  key={not.id}
                   className="last-of-type:border-none border-b border-b-zinc-800 cursor-pointer hover:bg-zinc-700/10 px-24 py-2 text-zinc-500"
                 >
-                  <span className="text-white">{username}</span>
-                  {` ${action}${post_text}`}
+                  <span className="text-white">{not.user.username}</span>
+                  {` ${not.action}`}
                 </div>
               ))
             ) : (

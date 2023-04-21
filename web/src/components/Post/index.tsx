@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query"
 import React from "react"
 import { socket } from "../../App"
 import { queryClient } from "../../services/queryClient"
+import { INotificationBody } from "../../schemas/notifications"
 
 interface Props {
   post: IPostSession
@@ -49,10 +50,14 @@ export const Post: React.FC<Props> = ({ post }) => {
         headers,
       }),
     onSuccess(_, { post_id, post_text }) {
-      if (user && user.username) {
+      if (user && user.id) {
         queryClient.invalidateQueries(["posts", token])
         socket.emit("join_post", { post_id })
-        socket.emit("make_bid", { post_id, username: user.username, post_text })
+        socket.emit("make_bid", {
+          action: "MAKE_A_BID_ON_POST",
+          subject: post_id,
+          user_id: user.id,
+        } as INotificationBody)
       }
     },
   })

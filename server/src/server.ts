@@ -6,7 +6,7 @@ import {
   userSigninSchema,
 } from "./schemas/users"
 import { filterSensetiveInfoForClient } from "./helpers"
-import { Bids, Prisma } from "@prisma/client"
+import { Bids, Notification, Prisma } from "@prisma/client"
 import { postSchemaBody } from "./schemas/posts"
 import { getCronTime } from "./helpers/getCronTime"
 import cron from "node-cron"
@@ -15,8 +15,9 @@ import dotenv from "dotenv"
 import { Server } from "socket.io"
 import http from "http"
 import { bidBodySchema } from "./schemas/bids"
-import { INotification } from "./schemas/notifications"
+import { INotification, notificationBodySchema } from "./schemas/notifications"
 import cors from "cors"
+import { z } from "zod"
 dotenv.config()
 
 const app = express()
@@ -61,14 +62,23 @@ io.on("connection", socket => {
   })
 
   socket.on("make_bid", async payload => {
-    const { post_id, username, post_text } = payload
+    const { action, subject, user_id } = notificationBodySchema.parse(payload)
 
-    socket.to(post_id).emit("bid_was_made", {
-      action: "fez um lance no post ",
-      id: Math.random().toString(36).substring(0, 9),
-      post_text,
-      username,
-    } as INotification)
+    const { user_id: subject_author_id } = await prisma.post.findFirstOrThrow({
+      where: {
+        id: subject,
+      },
+    })
+
+    const notification = await prisma.notification.create({
+      data: {
+        user_id,
+        subject,
+        action,
+        subject_author_id,
+      },
+    })
+    socket.to(notification.subject).emit("bid_was_made", notification)
   })
 })
 
@@ -205,6 +215,30 @@ app.get("/posts", ensureAuth, async (req: Request, res: Response) => {
 
   return res.json(sessionPosts)
 })
+
+app.get(
+  "/user/notifications",
+  ensureAuth,
+  async (req: Request, res: Response) => {
+    const { user_id } = req
+
+    const userNotifications = await prisma.notification.findMany({
+      where: {
+        user_id,
+      },
+      include: {
+        user: true,
+      },
+    })
+
+    const userSessionNotifications = userNotifications.map(not => ({
+      ...not,
+      user: filterSensetiveInfoForClient(not.user),
+    }))
+
+    return res.json(userSessionNotifications)
+  }
+)
 
 app.get("/whoami", ensureAuth, async (req: Request, res: Response) => {
   const { user_id } = req
