@@ -3,19 +3,20 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id          String   @id @default(cuid())
-  name        String?
-  username    String   @unique
-  password    String
-  profile_pic String?
-  created_at  DateTime @default(now())
-  Post        Post[]
-  user_bids   Bids[]
+  id            String         @id @default(cuid())
+  name          String?
+  username      String         @unique
+  password      String
+  profile_pic   String?
+  created_at    DateTime       @default(now())
+  Post          Post[]
+  user_bids     Bids[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -45,5 +46,20 @@ model Bids {
 
   @@unique([user_id, post_id])
   @@map("bids")
-  
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id])
+  action     String
+  subject    String
+  user_id    String
+  read       Boolean  @default(false)
+
+  @@map("notifications")
+}
+
+enum NotificationActions {
+  MAKE_A_BID_ON_POST
 }
