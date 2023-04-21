@@ -14,9 +14,9 @@ import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 import { Server } from "socket.io"
 import http from "http"
-import cors from "cors"
 import { bidBodySchema } from "./schemas/bids"
 import { INotification } from "./schemas/notifications"
+import cors from "cors"
 dotenv.config()
 
 const app = express()
@@ -249,13 +249,13 @@ app.post("/users", async (req: Request, res: Response) => {
         case "P2002": {
           if (error.meta) {
             return res.status(400).json(error)
-            const target = error.meta.target as string[]
-            const fields = target.join(", ")
-            const singularField = `Já existe uma conta com o campo: ${fields}.`
-            const multipleFields = `Já existem contas com os campos: ${fields}.`
-            return res.status(400).json({
-              message: target.length === 1 ? singularField : multipleFields,
-            })
+            // const target = error.meta.target as string[]
+            // const fields = target.join(", ")
+            // const singularField = `Já existe uma conta com o campo: ${fields}.`
+            // const multipleFields = `Já existem contas com os campos: ${fields}.`
+            // return res.status(400).json({
+            //   message: target.length === 1 ? singularField : multipleFields,
+            // })
           }
           return
         }
