@@ -4,9 +4,11 @@ import { ptBR } from "date-fns/locale"
 import dayjs from "dayjs"
 import { IPostSession } from "../../schemas/posts"
 import { useAuthStore } from "../../zustand/auth"
+import { useMutation } from "@tanstack/react-query"
 
 import React from "react"
 import { socket } from "../../App"
+import { queryClient } from "../../services/queryClient"
 
 interface Props {
   post: IPostSession
@@ -32,21 +34,31 @@ export const Post: React.FC<Props> = ({ post }) => {
     { locale: ptBR, addSuffix: true }
   )
 
-  const handleMakeBid = (post_id: string, post_text: string) => {
-    return async () => {
-      await axios.post(
-        `http://localhost:3939/bid/${post_id}`,
-        {},
-        {
-          headers,
-        }
-      )
+  interface MakeBidRequestBody {
+    post_id: string
+    post_text: string
+  }
+
+  const { mutateAsync: makeBidRequest } = useMutation<
+    unknown,
+    unknown,
+    MakeBidRequestBody
+  >({
+    mutationFn: ({ post_id }) =>
+      axios.post(`http://localhost:3939/bid/${post_id}`, undefined, {
+        headers,
+      }),
+    onSuccess(_, { post_id, post_text }) {
       if (user && user.username) {
+        queryClient.invalidateQueries(["posts", token])
         socket.emit("join_post", { post_id })
         socket.emit("make_bid", { post_id, username: user.username, post_text })
       }
-    }
-  }
+    },
+  })
+
+  const handleMakeBid = (post_id: string, post_text: string) => () =>
+    makeBidRequest({ post_id, post_text })
 
   const isPostOwner = user ? post.user_id === user.id : null
 

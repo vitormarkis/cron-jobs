@@ -23,42 +23,22 @@ function App() {
   const { token, isAuth, user } = useAuthStore(state => state)
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
 
-  const [posts, setPosts] = useState<IPostSession[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ["posts", token],
+    queryFn: () =>
+      axios
+        .get(URL + "/posts", { headers })
+        .then(r => z.array(postSessionSchema).parse(r.data)),
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: isAuth,
+  })
 
   useEffect(() => {
-    axios
-      .get(URL + "/posts", { headers })
-      .then(r => {
-        const feedPosts = z.array(postSessionSchema).parse(r.data)
-        setPosts(feedPosts)
-      })
-      .finally(() => setIsLoading(false))
+    if (user) socket.emit("join_room", user)
   }, [token])
 
-  // const {
-  //   data: posts,
-  //   isLoading,
-  //   isError,
-  //   error
-  // } = useQuery({
-  //   queryKey: ["posts", token],
-  //   queryFn: () =>
-  //     axios.get(URL + "/posts", { headers }).then(async r => {
-  //       console.log(r.data)
-  //       return z.array(postSessionSchema).parse(r.data)
-  //     }),
-  //   staleTime: 1000 * 60 * 1,
-  //   retry: false,
-  //   refetchOnWindowFocus: false,
-  //   enabled: isAuth,
-  // })
-
-  useEffect(() => {
-    if(user) socket.emit("join_room", user)
-  }, [user])
-
-  
   return (
     <div className="bg-zinc-800 whitespace-nowrap text-white h-screen flex flex-col [&_*]:transition-colors [&_*]:duration-200">
       <Header />

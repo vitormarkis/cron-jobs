@@ -248,6 +248,7 @@ app.post("/users", async (req: Request, res: Response) => {
       switch (error.code) {
         case "P2002": {
           if (error.meta) {
+            return res.status(400).json(error)
             const target = error.meta.target as string[]
             const fields = target.join(", ")
             const singularField = `Já existe uma conta com o campo: ${fields}.`
