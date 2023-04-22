@@ -51,19 +51,22 @@ export const Post: React.FC<Props> = ({ post }) => {
       }),
     onSuccess(_, { post_id, post_text }) {
       if (user && user.id) {
-        queryClient.invalidateQueries(["posts", token])
+        queryClient.invalidateQueries(["posts", user?.username ?? null])
         socket.emit("join_post", { post_id })
         socket.emit("make_bid", {
           action: "MAKE_A_BID_ON_POST",
           subject: post_id,
           user_id: user.id,
         } as INotificationBody)
+        console.log("?? onSuccess")
       }
     },
   })
 
-  const handleMakeBid = (post_id: string, post_text: string) => () =>
+  const handleMakeBid = (post_id: string, post_text: string) => () => {
+    console.log("?? handleMakeBid")
     makeBidRequest({ post_id, post_text })
+  }
 
   const isPostOwner = user ? post.user_id === user.id : null
 

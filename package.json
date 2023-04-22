@@ -1,0 +1,22 @@
+{
+  "name": "cron-jobs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "web": "cd web && npm run dev",
+    "prisma": "cd server && npx prisma studio"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vitormarkis/cron-jobs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vitormarkis/cron-jobs/issues"
+  },
+  "homepage": "https://github.com/vitormarkis/cron-jobs#readme"
+}

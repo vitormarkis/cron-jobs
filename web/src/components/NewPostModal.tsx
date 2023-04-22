@@ -9,16 +9,17 @@ import {
   userSessionSchema,
   userSigninSchema,
 } from "../schemas/users"
-import axios, { AxiosError, AxiosHeaders } from "axios"
+import axios, { AxiosError, AxiosHeaders, AxiosResponse } from "axios"
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useToastStore } from "../zustand/toastStore"
 import { useAuthStore } from "../zustand/auth"
 import { RegisterModal } from "./RegisterModal"
 import { useModalStore } from "../zustand/modal"
-import { IPostBody, postBodySchema } from "../schemas/posts"
+import { IPost, IPostBody, postBodySchema } from "../schemas/posts"
 import { useMutation } from "@tanstack/react-query"
 import { queryClient } from "../services/queryClient"
+import { socket } from "../App"
 
 export function NewPostModal({
   children,
@@ -42,18 +43,19 @@ export function NewPostModal({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const { register, handleSubmit, reset } = useForm<IPostBody>()
-  const { token } = useAuthStore()
+  const { token, user } = useAuthStore()
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
 
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isLoading } = useMutation<AxiosResponse<IPost>, unknown, IPostBody>({
     mutationFn: ({ announcement_date, text }: IPostBody) =>
       axios.post(
         "http://localhost:3939/posts",
         { announcement_date: new Date(announcement_date).toISOString(), text },
         { headers }
       ),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["posts", token])
+    onSuccess: (post) => {
+        socket.emit("join_post", { post_id: post.data.id })
+      queryClient.invalidateQueries(["posts", user?.username ?? null])
       closeRootModal()
     },
   })

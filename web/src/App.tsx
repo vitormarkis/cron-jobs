@@ -24,12 +24,11 @@ function App() {
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
 
   const { data: posts, isLoading } = useQuery({
-    queryKey: ["posts", token],
+    queryKey: ["posts", user?.username ?? null],
     queryFn: () =>
       axios
         .get(URL + "/posts", { headers })
         .then(r => z.array(postSessionSchema).parse(r.data)),
-    staleTime: Infinity,
     retry: false,
     refetchOnWindowFocus: false,
     enabled: isAuth,

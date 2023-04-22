@@ -1,7 +1,10 @@
 import { z } from "zod"
 import { userSessionSchema } from "./users"
 
-export const notificationActionSchema = z.enum(["MAKE_A_BID_ON_POST"])
+export const notificationActionSchema = z.enum([
+  "MAKE_A_BID_ON_POST",
+  "POST_HAS_FINISHED",
+])
 
 export const notificationSchema = z.object({
   id: z.string(),

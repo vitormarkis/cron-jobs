@@ -15,7 +15,7 @@ import dotenv from "dotenv"
 import { Server } from "socket.io"
 import http from "http"
 import { bidBodySchema } from "./schemas/bids"
-import { INotification, notificationBodySchema } from "./schemas/notifications"
+import { INotification, INotificationSession, notificationBodySchema } from "./schemas/notifications"
 import cors from "cors"
 import { z } from "zod"
 dotenv.config()
@@ -137,6 +137,7 @@ app.get("/run-query", async (req: Request, res: Response) => {
 
   await prisma.bids.deleteMany()
   await prisma.notification.deleteMany()
+  await prisma.post.deleteMany()
 
   return res.end()
 })
@@ -146,7 +147,7 @@ app.post("/posts", ensureAuth, async (req: Request, res: Response) => {
     const { text, announcement_date } = postSchemaBody.parse(req.body)
     const { user_id } = req
 
-    const databaseRawResponse = await prisma.post.create({
+    const postRaw = await prisma.post.create({
       data: {
         text,
         user_id,
@@ -154,24 +155,46 @@ app.post("/posts", ensureAuth, async (req: Request, res: Response) => {
       },
     })
 
-    const scheduleDate = getCronTime(new Date(announcement_date))
+    const scheduleDate = "00 48 17 22 4 6"
+    // const scheduleDate = getCronTime(new Date(announcement_date))
 
     const job = cron.schedule(scheduleDate, async () => {
-      console.log("[cron] Job running for post ID:", databaseRawResponse.id)
+      console.log("[cron] Job running for post ID:", postRaw.id)
 
       try {
         await prisma.post
           .update({
             where: {
-              id: databaseRawResponse.id,
+              id: postRaw.id,
             },
             data: {
               active: false,
             },
           })
-          .then(() =>
-            console.log("Atualizado o status do post " + databaseRawResponse.id)
-          )
+          .then(async post => {
+            const userWhoHaveMadeBidOnThatPost = await prisma.bids.findMany({
+              where: {
+                post_id: post.id,
+              },
+              select: {
+                user_id: true
+              }
+            })
+
+            userWhoHaveMadeBidOnThatPost.forEach(async bid => {
+              await prisma.notification.create({
+                data: {
+                  action: "POST_HAS_FINISHED",
+                  subject: post.id,
+                  user_id: bid.user_id,
+                  subject_author_id: post.user_id,
+                }
+              })
+            })
+            io.to(post.id).emit("post_shutdown")
+            
+            console.log("Atualizado o status do post " + postRaw.id)
+          })
       } catch (e) {
         console.log({
           msg: "errooo",
@@ -180,14 +203,12 @@ app.post("/posts", ensureAuth, async (req: Request, res: Response) => {
       }
     })
 
-    scheduledJobs.set(databaseRawResponse.id, job)
+    scheduledJobs.set(postRaw.id, job)
     job.start()
-    console.log("[cron] Job started for post ID:", databaseRawResponse.id)
+    console.log("[cron] Job started for post ID:", postRaw.id)
     console.log("[cron] This job will run at:", scheduleDate)
 
-    return res.status(201).json({
-      databaseRawResponse,
-    })
+    return res.status(201).json(postRaw)
   } catch (error) {
     return res.json(error)
   }
@@ -238,7 +259,7 @@ app.get(
       user: filterSensetiveInfoForClient(not.user),
       subject_author: filterSensetiveInfoForClient(not.subject_author),
     }))
-    
+
     return res.json(userSessionNotifications)
   }
 )

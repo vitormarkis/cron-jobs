@@ -25,21 +25,29 @@ export function NotificationsPopover({
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
 
   const { data: notifications, isLoading } = useQuery({
-    queryKey: ["notifications", token],
+    queryKey: ["notifications", user?.username ?? null],
     queryFn: () =>
       axios
         .get("http://localhost:3939/user/notifications", { headers })
         .then(r => z.array(notificationSessionSchema).parse(r.data)),
-    staleTime: Infinity,
     retry: false,
     refetchOnWindowFocus: false,
     enabled: isAuth,
   })
 
+  console.log({ notifications })
+
   useEffect(() => {
-    socket.on("bid_was_made", (notification: INotification) => {
-      console.log("bid_was_made ?", notification)
-      queryClient.invalidateQueries(["notifications", token])
+    ;["post_shutdown", "bid_was_made"].forEach(socketListener => {
+      console.log(socketListener)
+      socket.on(socketListener, (notification: INotification) => {
+        Promise.all([
+          queryClient.invalidateQueries(["notifications",
+            user?.username ?? null,
+          ]),
+          queryClient.invalidateQueries(["posts", user?.username ?? null]),
+        ])
+      })
     })
   }, [socket])
 
