@@ -70,7 +70,6 @@ export function NewPostModal({
   const submitHandler: SubmitHandler<IPostBody> = async formData => {
     try {
       const { announcement_date, text } = postBodySchema.parse(formData)
-      console.log(announcement_date)
       setErrorMessage("")
 
       await mutateAsync({ announcement_date, text })

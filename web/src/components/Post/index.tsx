@@ -58,13 +58,11 @@ export const Post: React.FC<Props> = ({ post }) => {
           subject: post_id,
           user_id: user.id,
         } as INotificationBody)
-        console.log("?? onSuccess")
       }
     },
   })
 
   const handleMakeBid = (post_id: string, post_text: string) => () => {
-    console.log("?? handleMakeBid")
     makeBidRequest({ post_id, post_text })
   }
 

@@ -35,12 +35,10 @@ export function NotificationsPopover({
     enabled: isAuth,
   })
 
-  console.log({ notifications })
-
   useEffect(() => {
-    ;["post_shutdown", "bid_was_made"].forEach(socketListener => {
-      console.log(socketListener)
-      socket.on(socketListener, (notification: INotification) => {
+    const socketListeners = ["post_shutdown", "bid_was_made"]
+    socketListeners.forEach(listener => {
+      socket.on(listener, (notification: INotification) => {
         Promise.all([
           queryClient.invalidateQueries(["notifications",
             user?.username ?? null,

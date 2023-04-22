@@ -17,8 +17,6 @@ const URL = "http://localhost:3939"
 
 export const socket = io(URL as string)
 
-socket.on("connect", () => console.log("Client connected."))
-
 function App() {
   const { token, isAuth, user } = useAuthStore(state => state)
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
