@@ -20,6 +20,9 @@ import { IPost, IPostBody, postBodySchema } from "../schemas/posts"
 import { useMutation } from "@tanstack/react-query"
 import { queryClient } from "../services/queryClient"
 import { socket } from "../App"
+import dayjs from "dayjs"
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+dayjs.extend(customParseFormat)
 
 export function NewPostModal({
   children,
@@ -46,15 +49,19 @@ export function NewPostModal({
   const { token, user } = useAuthStore()
   const headers = new AxiosHeaders().setAuthorization(`bearer ${token}`)
 
-  const { mutateAsync, isLoading } = useMutation<AxiosResponse<IPost>, unknown, IPostBody>({
+  const { mutateAsync, isLoading } = useMutation<
+    AxiosResponse<IPost>,
+    unknown,
+    IPostBody
+  >({
     mutationFn: ({ announcement_date, text }: IPostBody) =>
       axios.post(
         "http://localhost:3939/posts",
         { announcement_date: new Date(announcement_date).toISOString(), text },
         { headers }
       ),
-    onSuccess: (post) => {
-        socket.emit("join_post", { post_id: post.data.id })
+    onSuccess: post => {
+      socket.emit("join_post", { post_id: post.data.id })
       queryClient.invalidateQueries(["posts", user?.username ?? null])
       closeRootModal()
     },
@@ -63,6 +70,7 @@ export function NewPostModal({
   const submitHandler: SubmitHandler<IPostBody> = async formData => {
     try {
       const { announcement_date, text } = postBodySchema.parse(formData)
+      console.log(announcement_date)
       setErrorMessage("")
 
       await mutateAsync({ announcement_date, text })
@@ -81,8 +89,11 @@ export function NewPostModal({
   }
 
   const open = isModalOpen && modalHistory.length !== 0
-
+  const defaultAnnouncementDate = dayjs(new Date()).format("YYYY-MM-DD")
+  
   useEffect(() => {
+    reset({ announcement_date: defaultAnnouncementDate })
+
     if (modalHistory.length === 1 && !rootModalOpen) {
       setRootModalOpen(setIsModalOpen)
     }
@@ -128,7 +139,6 @@ export function NewPostModal({
                 className="grid place-content-center w-full h-[40px] focus:outline focus:outline-blue-500 focus:outline-offset-2 rounded-lg mb-4 bg-zinc-800 placeholder:text-zinc-500 px-4"
                 type="date"
                 placeholder="Data de encerramento do post..."
-                defaultValue={new Date().toISOString()}
                 {...register("announcement_date")}
               />
               <div className="flex justify-end items-center">

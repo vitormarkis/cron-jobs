@@ -155,7 +155,7 @@ app.post("/posts", ensureAuth, async (req: Request, res: Response) => {
       },
     })
 
-    const scheduleDate = "00 48 17 22 4 6"
+    const scheduleDate = "00 52 17 22 4 6"
     // const scheduleDate = getCronTime(new Date(announcement_date))
 
     const job = cron.schedule(scheduleDate, async () => {
