@@ -16,6 +16,7 @@ export const notificationSchema = z.object({
 export const notificationSessionSchema = notificationSchema.merge(
   z.object({
     user: userSessionSchema,
+    subject_author: userSessionSchema,
   })
 )
 
@@ -28,3 +29,4 @@ export const notificationBodySchema = z.object({
 export type INotification = z.infer<typeof notificationSchema>
 export type INotificationSession = z.infer<typeof notificationSessionSchema>
 export type INotificationBody = z.infer<typeof notificationBodySchema>
+export type INotificationCodes = z.infer<typeof notificationActionSchema>

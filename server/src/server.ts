@@ -228,14 +228,16 @@ app.get(
       },
       include: {
         user: true,
+        subject_author: true,
       },
     })
 
     const userSessionNotifications = userNotifications.map(not => ({
       ...not,
       user: filterSensetiveInfoForClient(not.user),
+      subject_author: filterSensetiveInfoForClient(not.subject_author),
     }))
-
+    
     return res.json(userSessionNotifications)
   }
 )
