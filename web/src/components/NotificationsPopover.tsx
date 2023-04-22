@@ -49,7 +49,7 @@ export function NotificationsPopover({
       {ReactDOM.createPortal(
         <Popover.Content align="end">
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 text-white shadow-lg shadow-black/20 max-h-[75vh] overflow-y-scroll scroll-thin text-sm">
-            {notifications ? (
+            {notifications && notifications.length > 0 ? (
               notifications.map(not => (
                 <Notification key={not.id} notification={not} />
               ))

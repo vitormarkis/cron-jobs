@@ -72,10 +72,10 @@ io.on("connection", socket => {
 
     const notification = await prisma.notification.create({
       data: {
-        user_id,
+        user_id: subject_author_id,
         subject,
         action,
-        subject_author_id,
+        subject_author_id: user_id,
       },
     })
     socket.to(notification.subject).emit("bid_was_made", notification)
@@ -136,6 +136,7 @@ app.get("/run-query", async (req: Request, res: Response) => {
   // `
 
   await prisma.bids.deleteMany()
+  await prisma.notification.deleteMany()
 
   return res.end()
 })
